@@ -20,7 +20,6 @@ import com.yandex.mapkit.ScreenPoint;
 import com.yandex.mapkit.Animation;
 import com.yandex.mapkit.MapKitFactory;
 import com.yandex.mapkit.RequestPoint;
-import com.yandex.mapkit.RequestPointType;
 import com.yandex.mapkit.directions.DirectionsFactory;
 import com.yandex.mapkit.directions.driving.DrivingOptions;
 import com.yandex.mapkit.directions.driving.DrivingRoute;
@@ -29,6 +28,7 @@ import com.yandex.mapkit.directions.driving.DrivingSection;
 import com.yandex.mapkit.directions.driving.DrivingSession;
 import com.yandex.mapkit.directions.driving.VehicleOptions;
 import com.yandex.mapkit.geometry.BoundingBox;
+import com.yandex.mapkit.geometry.Geometry;
 import com.yandex.mapkit.geometry.Point;
 import com.yandex.mapkit.geometry.Polyline;
 import com.yandex.mapkit.geometry.SubpolylineHelper;
@@ -144,18 +144,19 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
         super(context);
         DirectionsFactory.initialize(context);
         drivingRouter = DirectionsFactory.getInstance().createDrivingRouter();
-        getMap().addCameraListener(this);
-        getMap().addInputListener(this);
-        getMap().setMapLoadedListener(this);
+        getMapWindow().getMap().addCameraListener(this);
+        getMapWindow().getMap().addCameraListener(this);
+        getMapWindow().getMap().addInputListener(this);
+        getMapWindow().getMap().setMapLoadedListener(this);
     }
 
     // REF
     public void setCenter(CameraPosition position, float duration, int animation) {
         if (duration > 0) {
             Animation.Type anim = animation == 0 ? Animation.Type.SMOOTH : Animation.Type.LINEAR;
-            getMap().move(position, new Animation(anim, duration), null);
+            getMapWindow().getMap().move(position, new Animation(anim, duration), null);
         } else {
-            getMap().move(position);
+            getMapWindow().getMap().move(position);
         }
     }
 
@@ -220,7 +221,7 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
     }
 
     public void emitCameraPositionToJS(String id) {
-        CameraPosition position = getMap().getCameraPosition();
+        CameraPosition position = getMapWindow().getMap().getCameraPosition();
         WritableMap cameraPosition = positionToJSON(position, CameraUpdateReason.valueOf("APPLICATION"), true);
         cameraPosition.putString("id", id);
         ReactContext reactContext = (ReactContext) getContext();
@@ -228,7 +229,7 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
     }
 
     public void emitVisibleRegionToJS(String id) {
-        VisibleRegion visibleRegion = getMap().getVisibleRegion();
+        VisibleRegion visibleRegion = getMapWindow().getMap().getVisibleRegion();
         WritableMap result = visibleRegionToJSON(visibleRegion);
         result.putString("id", id);
         ReactContext reactContext = (ReactContext) getContext();
@@ -272,7 +273,7 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
     }
 
     public void setZoom(Float zoom, float duration, int animation) {
-        CameraPosition prevPosition = getMap().getCameraPosition();
+        CameraPosition prevPosition = getMapWindow().getMap().getCameraPosition();
         CameraPosition position = new CameraPosition(prevPosition.getTarget(), zoom, prevPosition.getAzimuth(), prevPosition.getTilt());
         setCenter(position, duration, animation);
     }
@@ -418,14 +419,12 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
         }
         if (points.size() == 1) {
             Point center = new Point(points.get(0).getLatitude(), points.get(0).getLongitude());
-            getMap().move(new CameraPosition(center, 15, 0, 0));
+            getMapWindow().getMap().move(new CameraPosition(center, 15, 0, 0));
             return;
         }
-//        CameraPosition cameraPosition = getMap().cameraPosition(calculateBoundingBox(points));
-//        CameraPosition cameraPosition = getMap().cameraPosition(calculateBoundingBox(points));
-        CameraPosition cameraPosition = getMapWindow().getMap().getCameraPosition();
+        CameraPosition cameraPosition = getMapWindow().getMap().cameraPosition(Geometry.fromBoundingBox(calculateBoundingBox(points)));
         cameraPosition = new CameraPosition(cameraPosition.getTarget(), cameraPosition.getZoom() - 0.8f, cameraPosition.getAzimuth(), cameraPosition.getTilt());
-        getMap().move(cameraPosition, new Animation(Animation.Type.SMOOTH, 0.7f), null);
+        getMapWindow().getMap().move(cameraPosition, new Animation(Animation.Type.SMOOTH, 0.7f), null);
     }
 
     // PROPS
@@ -465,7 +464,7 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
 
     public void setMapStyle(@Nullable String style) {
         if (style != null) {
-            getMap().setMapStyle(style);
+            getMapWindow().getMap().setMapStyle(style);
         }
     }
 
@@ -473,15 +472,15 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
         if (type != null) {
             switch (type) {
                 case "none":
-                    getMap().setMapType(MapType.NONE);
+                    getMapWindow().getMap().setMapType(MapType.NONE);
                     break;
 
                 case "raster":
-                    getMap().setMapType(MapType.MAP);
+                    getMapWindow().getMap().setMapType(MapType.MAP);
                     break;
 
                 default:
-                    getMap().setMapType(MapType.VECTOR_MAP);
+                    getMapWindow().getMap().setMapType(MapType.VECTOR_MAP);
                     break;
             }
         }
@@ -539,19 +538,20 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
             }
         }
 
-        getMap().getLogo().setAlignment(new Alignment(horizontalAlignment, verticalAlignment));
+        getMapWindow().getMap().getLogo().setAlignment(new Alignment(horizontalAlignment, verticalAlignment));
     }
 
     public void setLogoPadding(@Nullable ReadableMap params) {
         int horizontalPadding = (params.hasKey("horizontal") && !params.isNull("horizontal")) ? params.getInt("horizontal") : 0;
         int verticalPadding = (params.hasKey("vertical") && !params.isNull("vertical")) ? params.getInt("vertical") : 0;
-        getMap().getLogo().setPadding(new Padding(horizontalPadding, verticalPadding));
+        getMapWindow().getMap().getLogo().setPadding(new Padding(horizontalPadding, verticalPadding));
     }
 
     public void setMaxFps(float fps) {
         maxFps = fps;
-//        getMapWindow().setMaxFps(maxFps);
-//        getMapWindow().se
+//        getMapWindow().
+//        getMapWindow().getMap().setMaxFps(maxFps);
+
     }
 
     public void setInteractive(boolean interactive) {
@@ -559,27 +559,27 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
     }
 
     public void setNightMode(Boolean nightMode) {
-        getMap().setNightModeEnabled(nightMode);
+        getMapWindow().getMap().setNightModeEnabled(nightMode);
     }
 
     public void setScrollGesturesEnabled(Boolean scrollGesturesEnabled) {
-        getMap().setScrollGesturesEnabled(scrollGesturesEnabled);
+        getMapWindow().getMap().setScrollGesturesEnabled(scrollGesturesEnabled);
     }
 
     public void setZoomGesturesEnabled(Boolean zoomGesturesEnabled) {
-        getMap().setZoomGesturesEnabled(zoomGesturesEnabled);
+        getMapWindow().getMap().setZoomGesturesEnabled(zoomGesturesEnabled);
     }
 
     public void setRotateGesturesEnabled(Boolean rotateGesturesEnabled) {
-        getMap().setRotateGesturesEnabled(rotateGesturesEnabled);
+        getMapWindow().getMap().setRotateGesturesEnabled(rotateGesturesEnabled);
     }
 
     public void setFastTapEnabled(Boolean fastTapEnabled) {
-        getMap().setFastTapEnabled(fastTapEnabled);
+        getMapWindow().getMap().setFastTapEnabled(fastTapEnabled);
     }
 
     public void setTiltGesturesEnabled(Boolean tiltGesturesEnabled) {
-        getMap().setTiltGesturesEnabled(tiltGesturesEnabled);
+        getMapWindow().getMap().setTiltGesturesEnabled(tiltGesturesEnabled);
     }
 
     public void setTrafficVisible(Boolean isVisible) {
@@ -785,7 +785,6 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
             _child.setMapObject(obj);
         } else if (child instanceof YamapCircle) {
             YamapCircle _child = (YamapCircle) child;
-//            CircleMapObject obj = getMap().getMapObjects().addCircle(_child.circle, 0, 0.f, 0);
             CircleMapObject obj = getMapWindow().getMap().getMapObjects().addCircle(_child.circle);
             _child.setMapObject(obj);
         }
@@ -798,7 +797,7 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
             final MapObject mapObject = child.getMapObject();
             if (mapObject == null || !mapObject.isValid()) return;
 
-            getMap().getMapObjects().remove(mapObject);
+            getMapWindow().getMap().getMapObjects().remove(mapObject);
         }
     }
 
