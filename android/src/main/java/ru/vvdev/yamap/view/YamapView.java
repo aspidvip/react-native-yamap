@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PointF;
+import android.view.MotionEvent;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -148,6 +149,7 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
         getMapWindow().getMap().addCameraListener(this);
         getMapWindow().getMap().addInputListener(this);
         getMapWindow().getMap().setMapLoadedListener(this);
+
     }
 
     // REF
@@ -868,6 +870,21 @@ public class YamapView extends MapView implements UserLocationObjectListener, Ca
         data.putDouble("lon", point.getLongitude());
         ReactContext reactContext = (ReactContext) getContext();
         reactContext.getJSModule(RCTEventEmitter.class).receiveEvent(getId(), "onMapLongPress", data);
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        switch (ev.getAction()) {
+            case MotionEvent.ACTION_UP:
+                System.out.println("unlocked");
+                this.getParent().requestDisallowInterceptTouchEvent(false);
+                break;
+            case MotionEvent.ACTION_DOWN:
+                System.out.println("locked");
+                this.getParent().requestDisallowInterceptTouchEvent(true);
+                break;
+        }
+        return super.dispatchTouchEvent(ev);
     }
 
     @Override
