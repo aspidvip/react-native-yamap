@@ -84,7 +84,7 @@ open class YamapView(context: Context?) : MapView(context), UserLocationObjectLi
     private var userLocationIconScale = 1f
     private var userLocationBitmap: Bitmap? = null
     private val routeMng = RouteManager()
-    private var routeOptions: RouteOptions = RouteOptions(FitnessOptions(false))
+    private var routeOptions: RouteOptions = RouteOptions(FitnessOptions())
     private val masstransitRouter = TransportFactory.getInstance().createMasstransitRouter()
     private val drivingRouter: DrivingRouter
     private val pedestrianRouter = TransportFactory.getInstance().createPedestrianRouter()
@@ -225,7 +225,7 @@ open class YamapView(context: Context?) : MapView(context), UserLocationObjectLi
         val screenPoints = Arguments.createArray()
 
         for (i in 0 until worldPoints.size()) {
-            val p = worldPoints.getMap(i)
+            val p = worldPoints.getMap(i)!!
             val worldPoint = Point(p.getDouble("lat"), p.getDouble("lon"))
             val screenPoint = mapWindow.worldToScreen(worldPoint)
             screenPoints.pushMap(screenPointToJSON(screenPoint))
@@ -244,7 +244,7 @@ open class YamapView(context: Context?) : MapView(context), UserLocationObjectLi
         val worldPoints = Arguments.createArray()
 
         for (i in 0 until screenPoints.size()) {
-            val p = screenPoints.getMap(i)
+            val p = screenPoints.getMap(i)!!
             val screenPoint = ScreenPoint(p.getDouble("x").toFloat(), p.getDouble("y").toFloat())
             val worldPoint = mapWindow.screenToWorld(screenPoint)
             worldPoints.pushMap(worldPointToJSON(worldPoint))
@@ -295,7 +295,7 @@ open class YamapView(context: Context?) : MapView(context), UserLocationObjectLi
             val _points = ArrayList<RequestPoint>()
             for (i in points.indices) {
                 val point = points[i]
-                val _p = RequestPoint(point!!, RequestPointType.WAYPOINT, null, null)
+                val _p = RequestPoint(point!!, RequestPointType.WAYPOINT, null, null, null)
                 _points.add(_p)
             }
 
@@ -310,7 +310,7 @@ open class YamapView(context: Context?) : MapView(context), UserLocationObjectLi
         val _points = ArrayList<RequestPoint>()
         for (i in points.indices) {
             val point = points[i]
-            _points.add(RequestPoint(point!!, RequestPointType.WAYPOINT, null, null))
+            _points.add(RequestPoint(point!!, RequestPointType.WAYPOINT, null, null, null))
         }
         val listener: Session.RouteListener = object : Session.RouteListener {
             override fun onMasstransitRoutes(routes: List<Route>) {
@@ -590,10 +590,10 @@ open class YamapView(context: Context?) : MapView(context), UserLocationObjectLi
         if (show) {
             userLocationLayer!!.setObjectListener(this)
             userLocationLayer!!.isVisible = true
-            userLocationLayer!!.isHeadingEnabled = true
+            userLocationLayer!!.isHeadingModeActive = true
         } else {
             userLocationLayer!!.isVisible = false
-            userLocationLayer!!.isHeadingEnabled = false
+            userLocationLayer!!.isHeadingModeActive = false
             userLocationLayer!!.setObjectListener(null)
         }
     }
@@ -685,7 +685,9 @@ open class YamapView(context: Context?) : MapView(context), UserLocationObjectLi
         val wTransports = Arguments.createMap()
 
         for ((key, value) in transports) {
-            wTransports.putArray(key, Arguments.fromList(value))
+            if (value != null) {
+                wTransports.putArray(key, Arguments.fromList(value))
+            }
         }
 
         routeMetadata.putMap("transports", wTransports)
