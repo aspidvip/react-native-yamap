@@ -26,6 +26,7 @@
     NSString* lastSource;
     NSValue* anchor;
     NSNumber* visible;
+    BOOL handled;
     NSMutableArray<UIView*>* _reactSubviews;
     UIView* _childView;
 }
@@ -36,6 +37,7 @@
     scale = [[NSNumber alloc] initWithInt:1];
     rotated = [[NSNumber alloc] initWithInt:0];
     visible = [[NSNumber alloc] initWithInt:1];
+    handled = YES;
     _reactSubviews = [[NSMutableArray alloc] init];
     source = @"";
     lastSource = @"";
@@ -54,16 +56,16 @@
           [iconStyle setAnchor:anchor];
         }
         [iconStyle setRotationType:rotated];
-		if ([_reactSubviews count] == 0) {
-			if (![source isEqual:@""]) {
-				if (![source isEqual:lastSource]) {
-					[mapObject setIconWithImage:[self resolveUIImage:source]];
-					lastSource = source;
-				}
-			}
-		}
+        if ([_reactSubviews count] == 0) {
+            if (![source isEqual:@""]) {
+                if (![source isEqual:lastSource]) {
+                    [mapObject setIconWithImage:[self resolveUIImage:source]];
+                    lastSource = source;
+                }
+            }
+        }
         [mapObject setIconStyleWithStyle:iconStyle];
-	}
+    }
 }
 
 
@@ -75,13 +77,16 @@
         [iconStyle setScale:scale];
         [iconStyle setVisible:visible];
         if (anchor) {
-          [iconStyle setAnchor:anchor];
+            [iconStyle setAnchor:anchor];
         }
         [iconStyle setRotationType:rotated];
         if ([_reactSubviews count] == 0) {
-            if (![source isEqual:@""]) {
-                    [mapObject setIconWithImage:[self resolveUIImage:source]];
+            if (![source isEqualToString:@""] && source != nil) {
+                UIImage *image = [self resolveUIImage:source];
+                if (image) {
+                    [mapObject setIconWithImage:image];
                     lastSource = source;
+                }
             }
         }
         [mapObject setIconStyleWithStyle:iconStyle];
@@ -107,23 +112,39 @@
     [self updateMarker];
 }
 
+- (void)setHandled:(BOOL)_handled {
+    handled = _handled;
+}
+
 - (void)setPoint:(YMKPoint*)point {
     _point = point;
     [self updateMarker];
 }
 
-- (UIImage*)resolveUIImage:(NSString*)uri {
-    UIImage *icon;
+- (UIImage *)resolveUIImage:(NSString *)uri {
+    UIImage *icon = nil;
+    
+    if (!uri || [uri isEqualToString:@""]) {
+        NSLog(@"URI is nil or empty");
+        return nil;
+    }
 
-    if ([uri rangeOfString:@"http://"].location == NSNotFound && [uri rangeOfString:@"https://"].location == NSNotFound) {
-        if ([uri rangeOfString:@"file://"].location != NSNotFound){
-            NSString* file = [uri substringFromIndex:8];
-            icon = [UIImage imageWithData:[NSData dataWithContentsOfURL:[NSURL fileURLWithPath:file]]];
-        } else {
-            icon = [UIImage imageNamed:uri];
-        }
-    } else {
-        icon = [UIImage imageWithData:[NSData dataWithContentsOfURL:[NSURL URLWithString:uri]]];
+    NSURL *url = [NSURL URLWithString:uri];
+    if (!url) {
+        NSLog(@"Failed to create URL from URI: %@", uri);
+        return nil;
+    }
+
+    NSData *imageData = [NSData dataWithContentsOfURL:url];
+    if (!imageData) {
+        NSLog(@"Failed to load image data from URL: %@", uri);
+        return nil;
+    }
+
+    icon = [UIImage imageWithData:imageData];
+    if (!icon) {
+        NSLog(@"Failed to create image from loaded data: %@", uri);
+        return nil;
     }
 
     return icon;
@@ -151,7 +172,7 @@
     if (self.onPress)
         self.onPress(@{});
 
-    return YES;
+    return handled;
 }
 
 - (YMKPoint*)getPoint {

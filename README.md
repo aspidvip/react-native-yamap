@@ -147,8 +147,6 @@ type MasstransitVehicles = 'bus' | 'trolleybus' | 'tramway' | 'minibus' | 'subur
 
 type Vehicles = MasstransitVehicles | 'walk' | 'car';
 
-type MapType = 'none' | 'raster' | 'vector';
-
 
 interface DrivingInfo {
   time: string;
@@ -189,6 +187,8 @@ interface CameraPosition {
   tilt: number;
   azimuth: number;
   point: Point;
+  reason: 'GESTURES' | 'APPLICATION';
+  finished: boolean;
 }
 
 type VisibleRegion = {
@@ -231,34 +231,33 @@ type YandexLogoPadding = {
 
 #### Доступные `props` для компонента **MapView**:
 
-| Название | Тип | Стандартное значение | Описание |
-|--|--|--|--|
-| showUserPosition | boolean | true | Отслеживание геоданных и отображение позиции пользователя |
-| followUser | boolean | true | слежение камеры за пользователем |
-| userLocationIcon | ImageSource | false | Иконка для позиции пользователя. Доступны те же значения что и у компонента Image из React Native |
-| userLocationIconScale | number | 1 | Масштабирование иконки пользователя |
-| initialRegion | InitialRegion | | Изначальное местоположение карты при загрузке |
-| interactive | boolean | true | Интерактивная ли карта (перемещение по карте, отслеживание нажатий) |
-| nightMode | boolean | false | Использование ночного режима |
-| onMapLoaded | function | | Колбек на загрузку карты |
-| onCameraPositionChange | function | | Колбек на изменение положения камеры |
-| onCameraPositionChangeEnd | function | | Колбек при завершении изменения положения камеры |
-| onMapPress | function | | Событие нажития на карту. Возвращает координаты точки на которую нажали |
-| onMapLongPress | function | | Событие долгого нажития на карту. Возвращает координаты точки на которую нажали |
-| userLocationAccuracyFillColor | string |  | Цвет фона зоны точности определения позиции пользователя |
-| userLocationAccuracyStrokeColor | string |  | Цвет границы зоны точности определения позиции пользователя |
-| userLocationAccuracyStrokeWidth | number | | Толщина зоны точности определения позиции пользователя |
-| scrollGesturesEnabled | boolean | true | Включены ли жесты скролла |
-| zoomGesturesEnabled | boolean | true | Включены ли жесты зума |
-| tiltGesturesEnabled | boolean | true | Включены ли жесты наклона камеры двумя пальцами |
-| rotateGesturesEnabled | boolean | true | Включены ли жесты поворота камеры |
-| fastTapEnabled | boolean | true | Убрана ли задержка в 300мс при клике/тапе |
-| clusterColor | string | 'red' | Цвет фона метки-кластера |
-| maxFps | number | 60 | Максимальная частота обновления карты |
-| logoPosition | YandexLogoPosition | {} | Позиция логотипа Яндекса на карте |
-| logoPadding | YandexLogoPadding | {} | Отступ логотипа Яндекса на карте |
-| mapType | string | 'vector' | Тип карты |
-| mapStyle | string | {} | Стили карты согласно [документации](https://yandex.ru/dev/maps/mapkit/doc/dg/concepts/style.html) |
+| Название | Тип | Стандартное значение | Описание                                                                                                                                                                                               |
+|--|--|--|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| showUserPosition | boolean | true | Отслеживание геоданных и отображение позиции пользователя. В Андройд нужно запросить `android.permission.ACCESS_FINE_LOCATION`. В Ios нужно добавить `NSLocationWhenInUseUsageDescription` в Info.plst |
+| followUser | boolean | true | слежение камеры за пользователем                                                                                                                                                                       |
+| userLocationIcon | ImageSource | false | Иконка для позиции пользователя. Доступны те же значения что и у компонента Image из React Native                                                                                                      |
+| userLocationIconScale | number | 1 | Масштабирование иконки пользователя                                                                                                                                                                    |
+| initialRegion | InitialRegion | | Изначальное местоположение карты при загрузке                                                                                                                                                          |
+| interactive | boolean | true | Интерактивная ли карта (перемещение по карте, отслеживание нажатий)                                                                                                                                    |
+| nightMode | boolean | false | Использование ночного режима                                                                                                                                                                           |
+| onMapLoaded | function | | Колбек на загрузку карты                                                                                                                                                                               |
+| onCameraPositionChange | function | | Колбек на изменение положения камеры                                                                                                                                                                   |
+| onCameraPositionChangeEnd | function | | Колбек при завершении изменения положения камеры                                                                                                                                                       |
+| onMapPress | function | | Событие нажития на карту. Возвращает координаты точки на которую нажали                                                                                                                                |
+| onMapLongPress | function | | Событие долгого нажития на карту. Возвращает координаты точки на которую нажали                                                                                                                        |
+| userLocationAccuracyFillColor | string |  | Цвет фона зоны точности определения позиции пользователя                                                                                                                                               |
+| userLocationAccuracyStrokeColor | string |  | Цвет границы зоны точности определения позиции пользователя                                                                                                                                            |
+| userLocationAccuracyStrokeWidth | number | | Толщина зоны точности определения позиции пользователя                                                                                                                                                 |
+| scrollGesturesEnabled | boolean | true | Включены ли жесты скролла                                                                                                                                                                              |
+| zoomGesturesEnabled | boolean | true | Включены ли жесты зума                                                                                                                                                                                 |
+| tiltGesturesEnabled | boolean | true | Включены ли жесты наклона камеры двумя пальцами                                                                                                                                                        |
+| rotateGesturesEnabled | boolean | true | Включены ли жесты поворота камеры                                                                                                                                                                      |
+| fastTapEnabled | boolean | true | Убрана ли задержка в 300мс при клике/тапе                                                                                                                                                              |
+| clusterColor | string | 'red' | Цвет фона метки-кластера                                                                                                                                                                               |
+| maxFps | number | 60 | Максимальная частота обновления карты                                                                                                                                                                  |
+| logoPosition | YandexLogoPosition | {} | Позиция логотипа Яндекса на карте                                                                                                                                                                      |
+| logoPadding | YandexLogoPadding | {} | Отступ логотипа Яндекса на карте                                                                                                                                                                       |
+| mapStyle | string | {} | Стили карты согласно [документации](https://yandex.ru/dev/maps/mapkit/doc/dg/concepts/style.html)                                                                                                      |
 
 #### Доступные методы для компонента **MapView**:
 
@@ -305,6 +304,7 @@ import { Marker } from 'react-native-yamap';
 | anchor | {  x:  number,  y:  number  } | Якорь иконки маркера. Координаты принимают значения от 0 до 1 |
 | zIndex | number | Отображение элемента по оси Z |
 | visible | boolean | Отображение маркера на карте |
+| handled | boolean | Включение(**false**)/отключение(**true**) всплытия события нажатия для родителя `default:true` |
 
 #### Доступные методы для примитива **Marker**:
 
@@ -332,6 +332,7 @@ import { Circle } from 'react-native-yamap';
 | strokeWidth | number | Толщина границы |
 | onPress | function | Действие при нажатии/клике |
 | zIndex | number | Отображение элемента по оси Z |
+| handled | boolean | Включение(**false**)/отключение(**true**) всплытия события нажатия для родителя `default:true` |
 
 ### Polyline
 
@@ -363,6 +364,7 @@ import { Polyline } from 'react-native-yamap';
 | gapLength | number | Длина разрыва между штрихами |
 | onPress | function | Действие при нажатии/клике |
 | zIndex | number | Отображение элемента по оси Z |
+| handled | boolean | Включение(**false**)/отключение(**true**) всплытия события нажатия для родителя `default:true` |
 
 ### Polygon
 
@@ -391,6 +393,7 @@ import { Polygon } from 'react-native-yamap';
 | innerRings | (Point[])[] | Массив полилиний, которые образуют отверстия в полигоне |
 | onPress | function | Действие при нажатии/клике |
 | zIndex | number | Отображение элемента по оси Z |
+| handled | boolean | Включение(**false**)/отключение(**true**) всплытия события нажатия для родителя `default:true` |
 
 ## Запрос маршрутов
 
@@ -511,6 +514,58 @@ const find = async (query: string, options?: SuggestOptions) => {
   // After searh session is finished
   Suggest.reset();
 }
+```
+## Поиск по гео (GeoSearch)
+
+Для поиска нужно воспользоваться модулем Suggest:
+
+```typescript
+
+import { Search } from 'react-native-yamap';
+
+const find = async (query: string, options?: SuggestOptions) => {
+  // можно использовать Point, BoundingBox, Polyline и Polygon (4 точки, без innerRings)
+  const search = await Search.searchText(
+    'Москва',
+    { type: GeoFigureType.POINT, value: {lat: 54, lon: 53}},
+    { disableSpellingCorrection: true, geometry: true },
+  );
+
+  // второй параметр это зум, определяющий на сколько малые объекты искать
+  const searchByPoint = await Search.searchPoint({lat: 54, lon: 53}, 10, {
+    disableSpellingCorrection: true,
+    geometry: true,
+  });
+
+  const resolveURI = await Search.resolveURI("ymapsbm1://geo?data=IgoNAQBYQhUBAFhC", {
+    disableSpellingCorrection: true,
+    geometry: true,
+  });
+
+  const searchByURI = await Search.searchByURI("ymapsbm1://geo?data=IgoNAQBYQhUBAFhC", {
+    disableSpellingCorrection: true,
+    geometry: true,
+  });
+  
+//   {"Components": [{"kind": "4", "name": "Малиновский сельсовет"}, {"kind": "4", "name": "Белебеевский район"}, {"kind": "3", "name": "Республика Башкортостан"}, {"kind": "19", "name": "Понтийско-Каспийская степь"}, {"kind": "19", "name": "Понтийско-Каспийская степь"}, {"kind": "19", "name": "Понтийско-Каспийская степь"}, {"kind": "3", "name": "Приволжский федеральный округ"}, {"kind": "1", "name": "Россия"}], "country_code": "RU", "formatted": "Россия, Республика Башкортостан, Белебеевский район, Малиновский сельсовет", "uri": "ymapsbm1://geo?data=IgoNAQBYQhUBAFhC"}
+  
+}
+```
+
+Также теперь можно воспользоваться геокодированием из поиска
+
+```typescript
+
+import { Search } from 'react-native-yamap';
+
+const address = Search.geocodePoint({lat: 54, lon: 53});
+
+// {"Components": [{"kind": "4", "name": "Малиновский сельсовет"}, {"kind": "4", "name": "Белебеевский район"}, {"kind": "3", "name": "Республика Башкортостан"}, {"kind": "19", "name": "Понтийско-Каспийская степь"}, {"kind": "19", "name": "Понтийско-Каспийская степь"}, {"kind": "19", "name": "Понтийско-Каспийская степь"}, {"kind": "3", "name": "Приволжский федеральный округ"}, {"kind": "1", "name": "Россия"}], "country_code": "RU", "formatted": "Россия, Республика Башкортостан, Белебеевский район, Малиновский сельсовет", "uri": "ymapsbm1://geo?data=IgoNAQBYQhUBAFhC"}
+
+const point = Search.geocodeAddress(address.formatted);
+
+// возвращает координаты по адресу {"lat": 53.999187242158015, "lon": 54.089440735780194}
+
 ```
 
 

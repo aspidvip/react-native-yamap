@@ -3,6 +3,11 @@ export interface Point {
   lon: number;
 }
 
+export interface BoundingBox {
+  southWest: Point;
+  northEast: Point;
+}
+
 export interface ScreenPoint {
   x: number;
   y: number;
@@ -31,8 +36,6 @@ export interface InitialRegion {
 export type MasstransitVehicles = 'bus' | 'trolleybus' | 'tramway' | 'minibus' | 'suburban' | 'underground' | 'ferry' | 'cable' | 'funicular';
 
 export type Vehicles = MasstransitVehicles | 'walk' | 'car';
-
-export type MapType = 'none' | 'raster' | 'vector';
 
 export interface DrivingInfo {
   time: string;
@@ -73,6 +76,7 @@ export interface CameraPosition {
   tilt: number;
   azimuth: number;
   point: Point;
+  reason: 'GESTURES' | 'APPLICATION';
   finished: boolean;
 }
 

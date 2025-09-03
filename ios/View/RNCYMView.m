@@ -2,6 +2,7 @@
 #import <React/UIView+React.h>
 
 #import <MapKit/MapKit.h>
+#import "../Converter/RCTConvert+Yamap.m"
 @import YandexMapsMobile;
 
 #ifndef MAX
@@ -40,6 +41,7 @@
     UIColor* clusterColor;
     NSMutableArray<YMKPlacemarkMapObject *>* placemarks;
     BOOL userClusters;
+    Boolean initializedRegion;
 }
 
 - (instancetype)init {
@@ -49,6 +51,7 @@
     clusterColor=nil;
     userClusters=NO;
     clusterCollection = [self.mapWindow.map.mapObjects addClusterizedPlacemarkCollectionWithClusterListener:self];
+    initializedRegion = NO;
     return self;
 }
 
@@ -136,23 +139,15 @@
 }
 
 - (void)removeReactSubview:(UIView<RCTComponent>*) subview {
-   //    YMKMapObjectCollection *objects = self.mapWindow.map.mapObjects;
-//    YamapPolygonView *polygon = (YamapPolygonView *) subview;
-//    [objects removeWithMapObject:[polygon getMapObject]];
-    
-//     if ([subview isKindOfClass:[YamapMarkerView class]]) {
-//
-//        YamapMarkerView* marker = (YamapMarkerView*) subview;
-//        [clusterCollection removeWithMapObject:[marker getMapObject]];
-//     }
-//     else {
+     if ([subview isKindOfClass:[YamapMarkerView class]]) {
+        YamapMarkerView* marker = (YamapMarkerView*) subview;
+        [clusterCollection removeWithMapObject:[marker getMapObject]];
+    } else {
         NSArray<id<RCTComponent>> *childSubviews = [subview reactSubviews];
         for (int i = 0; i < childSubviews.count; i++) {
             [self removeReactSubview:(UIView *)childSubviews[i]];
         }
-//    }
-    [placemarks removeAllObjects];
-    [clusterCollection clear];
+    }
     [_reactSubviews removeObject:subview];
     [super removeMarkerReactSubview:subview];
 }
@@ -199,6 +194,26 @@
     }
     [self fitMarkers:lastKnownMarkers];
     return YES;
+}
+
+- (void)setInitialRegion:(NSDictionary *)initialParams {
+    if (initializedRegion) return;
+    if ([initialParams valueForKey:@"lat"] == nil || [initialParams valueForKey:@"lon"] == nil) return;
+
+    float initialZoom = 10.f;
+    float initialAzimuth = 0.f;
+    float initialTilt = 0.f;
+
+    if ([initialParams valueForKey:@"zoom"] != nil) initialZoom = [initialParams[@"zoom"] floatValue];
+
+    if ([initialParams valueForKey:@"azimuth"] != nil) initialTilt = [initialParams[@"azimuth"] floatValue];
+
+    if ([initialParams valueForKey:@"tilt"] != nil) initialTilt = [initialParams[@"tilt"] floatValue];
+
+    YMKPoint *initialRegionCenter = [RCTConvert YMKPoint:@{@"lat" : [initialParams valueForKey:@"lat"], @"lon" : [initialParams valueForKey:@"lon"]}];
+    YMKCameraPosition *initialRegioPosition = [YMKCameraPosition cameraPositionWithTarget:initialRegionCenter zoom:initialZoom azimuth:initialAzimuth tilt:initialTilt];
+    [self.mapWindow.map moveWithCameraPosition:initialRegioPosition];
+    initializedRegion = YES;
 }
 
 
