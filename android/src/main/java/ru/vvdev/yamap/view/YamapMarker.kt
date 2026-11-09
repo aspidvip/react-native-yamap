@@ -36,6 +36,10 @@ class YamapMarker(context: Context?) : ReactViewGroup(context), MapObjectTapList
     private var markerAnchor: PointF? = null
     private var iconSource: String? = null
     private var _childView: View? = null
+    val hasCustomIcon: Boolean
+        get() = _childView != null || !iconSource.isNullOrEmpty()
+
+    private val pendingIcons = mutableMapOf<ImageProvider, com.yandex.mapkit.map.Callback>()
     override var rnMapObject: MapObject? = null
     private val childs = ArrayList<View>()
 
@@ -96,17 +100,20 @@ class YamapMarker(context: Context?) : ReactViewGroup(context), MapObjectTapList
             }
             (rnMapObject as PlacemarkMapObject).geometry = point!!
             (rnMapObject as PlacemarkMapObject).zIndex = zIndex.toFloat()
-            (rnMapObject as PlacemarkMapObject).setIconStyle(iconStyle)
+            if (!hasCustomIcon) {
+                (rnMapObject as PlacemarkMapObject).setIconStyle(iconStyle)
+            }
 
-            if (_childView != null) {
+            val childView = _childView
+            if (childView != null && childView.width > 0 && childView.height > 0) {
                 try {
                     val b = Bitmap.createBitmap(
-                        _childView!!.width, _childView!!.height, Bitmap.Config.ARGB_8888
+                        childView.width, childView.height, Bitmap.Config.ARGB_8888
                     )
                     val c = Canvas(b)
-                    _childView!!.draw(c)
-                    (rnMapObject as PlacemarkMapObject).setIcon(ImageProvider.fromBitmap(b))
-                    (rnMapObject as PlacemarkMapObject).setIconStyle(iconStyle)
+                    childView.draw(c)
+                    val icon = ImageProvider.fromBitmap(b, false, java.util.UUID.randomUUID().toString())
+                    setMarkerIcon(icon, iconStyle)
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -118,8 +125,7 @@ class YamapMarker(context: Context?) : ReactViewGroup(context), MapObjectTapList
                             override fun invoke(arg: Bitmap?) {
                                 try {
                                     val icon = ImageProvider.fromBitmap(arg)
-                                    (rnMapObject as PlacemarkMapObject).setIcon(icon)
-                                    (rnMapObject as PlacemarkMapObject).setIconStyle(iconStyle)
+                                    setMarkerIcon(icon, iconStyle)
                                 } catch (e: Exception) {
                                     e.printStackTrace()
                                 }
@@ -131,6 +137,16 @@ class YamapMarker(context: Context?) : ReactViewGroup(context), MapObjectTapList
         }
     }
 
+    private fun setMarkerIcon(icon: ImageProvider, style: IconStyle) {
+        val marker = rnMapObject as? PlacemarkMapObject ?: return
+        if (!marker.isValid) return
+
+        // MapKit загружает картинку асинхронно: держим её до завершения загрузки.
+        val callback = com.yandex.mapkit.map.Callback { pendingIcons.remove(icon) }
+        pendingIcons[icon] = callback
+        marker.setIcon(icon, style, callback)
+    }
+
     fun setMarkerMapObject(obj: MapObject?) {
         rnMapObject = obj as PlacemarkMapObject?
         rnMapObject!!.addTapListener(this)
@@ -138,14 +154,10 @@ class YamapMarker(context: Context?) : ReactViewGroup(context), MapObjectTapList
     }
 
     fun setChildView(view: View?) {
-        if (view == null) {
-            _childView!!.removeOnLayoutChangeListener(childLayoutListener)
-            _childView = null
-            updateMarker()
-            return
-        }
+        _childView?.removeOnLayoutChangeListener(childLayoutListener)
         _childView = view
-        _childView!!.addOnLayoutChangeListener(childLayoutListener)
+        view?.addOnLayoutChangeListener(childLayoutListener)
+        if (view != null || !iconSource.isNullOrEmpty()) updateMarker()
     }
 
     fun addChildView(view: View, index: Int) {

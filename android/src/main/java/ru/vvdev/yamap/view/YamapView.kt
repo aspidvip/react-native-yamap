@@ -782,7 +782,12 @@ open class YamapView(context: Context?) : MapView(context), UserLocationObjectLi
             _child.setPolylineMapObject(obj)
         } else if (child is YamapMarker) {
             val _child = child
-            val obj = mapWindow.map.mapObjects.addPlacemark(_child.point!!)
+            // Не загружаем стандартную синюю точку поверх своей иконки.
+            val obj = if (_child.hasCustomIcon) {
+                mapWindow.map.mapObjects.addPlacemark().apply { geometry = _child.point!! }
+            } else {
+                mapWindow.map.mapObjects.addPlacemark(_child.point!!)
+            }
             _child.setMarkerMapObject(obj)
         } else if (child is YamapCircle) {
             val _child = child
